@@ -12,13 +12,11 @@ from AlexaSongBot.sql.chat_sql import add_chat_to_db
 
 def yt_search(song):
     videosSearch = VideosSearch(song, limit=1)
-    result = videosSearch.result()
-    if not result:
-        return False
-    else:
+    if result := videosSearch.result():
         video_id = result["result"][0]["id"]
-        url = f"https://youtu.be/{video_id}"
-        return url
+        return f"https://youtu.be/{video_id}"
+    else:
+        return False
 
 
 @app.on_message(filters.create(ignore_blacklisted_users) & filters.command("mw"))
@@ -38,7 +36,7 @@ async def song(client, message):
     yt = YouTube(video_link)
     audio = yt.streams.filter(only_audio=True).first()
     try:
-        download = audio.download(filename=f"{str(user_id)}")
+        download = audio.download(filename=f'{user_id}')
     except Exception as ex:
         await status.edit("Failed to download song")
         LOGGER.error(ex)
@@ -47,11 +45,12 @@ async def song(client, message):
     await app.send_chat_action(message.chat.id, "upload_audio")
     await app.send_audio(
         chat_id=message.chat.id,
-        audio=f"{str(user_id)}.mp3",
+        audio=f'{user_id}.mp3',
         duration=int(yt.length),
         title=str(yt.title),
         performer=str(yt.author),
         reply_to_message_id=message.message_id,
     )
+
     await status.delete()
-    os.remove(f"{str(user_id)}.mp3")
+    os.remove(f'{user_id}.mp3')
